@@ -7,6 +7,39 @@ export const metadata: Metadata = {
     "How CrawlAI checks Content Credentials (C2PA), SynthID, EXIF, IPTC, XMP, and text patterns, and why detection is not proof.",
 };
 
+const METHOD_SOURCES = [
+  {
+    name: "Fast-DetectGPT",
+    url: "https://github.com/baoguangsheng/fast-detect-gpt",
+    method: "Fast conditional probability curvature check, from an ICLR 2024 paper.",
+  },
+  {
+    name: "Binoculars",
+    url: "https://github.com/ahans30/Binoculars",
+    method: "Compares perplexity across two language models as a ratio, from an ICML 2024 paper.",
+  },
+  {
+    name: "DetectGPT",
+    url: "https://github.com/eric-mitchell/detect-gpt",
+    method: "The original probability curvature method: AI text tends to sit at a local peak of model probability.",
+  },
+  {
+    name: "chatgpt-detector-roberta (Hello-SimpleAI)",
+    url: "https://huggingface.co/Hello-SimpleAI/chatgpt-detector-roberta",
+    method: "A RoBERTa classifier fine tuned on the HC3 human and ChatGPT comparison dataset.",
+  },
+  {
+    name: "roberta-base-openai-detector (OpenAI)",
+    url: "https://huggingface.co/openai-community/roberta-base-openai-detector",
+    method: "A RoBERTa classifier from the GPT-2 era. Weak on modern models, and labelled as such wherever it is used here.",
+  },
+  {
+    name: "Transformers.js",
+    url: "https://github.com/huggingface/transformers.js",
+    method: "Runs Hugging Face classification models inside the browser with ONNX and WebAssembly, which powers the optional ML check in the text tool.",
+  },
+];
+
 const SECTIONS = [
   {
     title: "Content Credentials and C2PA",
@@ -46,6 +79,14 @@ const SECTIONS = [
       "For text, CrawlAI measures simple, explainable patterns: sentence length variation, often called burstiness, word diversity, repeated phrases, stock formulaic phrases, and an approximate readability score.",
       "Commercial AI detectors use related signals plus trained models, and their scores are often presented as a percentage. Research has repeatedly shown those scores can flag human writing, in particular short, formal, technical, or non native English writing, and can miss edited generated writing.",
       "That is why CrawlAI gives you the measurements and what each one means, instead of a single AI or human verdict. No score here, or anywhere, proves who wrote a piece of text from the text alone.",
+    ],
+  },
+  {
+    title: "Open-source detector methods and sources",
+    body: [
+      "CrawlAI's main text score is original code written for this tool. Its design takes method ideas from published open research: perplexity style predictability, burstiness, and classifier style phrase and stylometry signals. No code was copied from those projects.",
+      "Fast-DetectGPT (ICLR 2024) speeds up probability curvature checking. Binoculars (ICML 2024) compares perplexity across two models as a ratio. DetectGPT is the original probability curvature method. The RoBERTa detectors from Hello-SimpleAI and OpenAI are trained classifiers, and Transformers.js is what lets a model like that run inside a browser.",
+      "The optional ML check in the text tool uses the RoBERTa base OpenAI detector through Transformers.js. That model dates from the GPT-2 era, with a ChatGPT era sibling trained on the HC3 dataset, and it is weak on modern model output. Its card in the report is labelled with exactly that caveat.",
     ],
   },
   {
@@ -90,6 +131,25 @@ export default function HowItWorksPage() {
           </section>
         ))}
       </div>
+
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <h2 className="text-xl font-semibold text-slate-950">Source projects</h2>
+        <ul className="mt-3 space-y-3">
+          {METHOD_SOURCES.map((item) => (
+            <li key={item.name} className="text-sm sm:text-base">
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-emerald-700 underline"
+              >
+                {item.name}
+              </a>
+              <span className="text-slate-600">: {item.method}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <div className="mt-8 rounded-2xl bg-slate-950 p-6 text-white">
         <h2 className="text-lg font-semibold">Try a check</h2>

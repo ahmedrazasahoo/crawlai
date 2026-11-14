@@ -2,7 +2,6 @@
 
 import { useMemo, useRef, useState } from "react";
 import { analyzeText, tokenizeWords, type TextAnalysis } from "@/lib/textAnalyzer";
-import type { MlResult } from "@/lib/mlDetector";
 
 const AI_LIKE_SAMPLE =
   "Furthermore, it is important to note that technology plays a crucial role in our daily lives. Moreover, in today's fast-paced world, it is essential to delve into the wide range of benefits that technology offers. Additionally, technology has transformed the landscape of communication in many significant ways. In conclusion, it is important to note that technology is a pivotal part of the modern world, and its impact will continue to grow in the future.";
@@ -37,23 +36,16 @@ const METHODS = [
     method: "A RoBERTa classifier from the GPT-2 era. Weak on modern models, and labelled as such wherever it is used here.",
   },
   {
-    name: "Transformers.js",
-    url: "https://github.com/huggingface/transformers.js",
-    method: "Runs Hugging Face classification models inside the browser with ONNX and WebAssembly, which powers the optional ML check below.",
+    name: "CrawlAI local engine (in this repo)",
+    url: "https://github.com/ahmedrazasahoo/crawlai",
+    method: "Every score on this page is computed by code that lives in this repository, in src/lib/textAnalyzer.ts, running on your own device. No text is sent to any outside service and no model is downloaded.",
   },
 ];
-
-type MlState =
-  | { status: "idle" }
-  | { status: "loading"; message: string }
-  | { status: "done"; result: MlResult }
-  | { status: "error"; message: string };
 
 export default function TextInspector() {
   const [text, setText] = useState("");
   const [submitted, setSubmitted] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [ml, setMl] = useState<MlState>({ status: "idle" });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const analysis = useMemo(() => (submitted ? analyzeText(submitted) : null), [submitted]);
@@ -62,7 +54,6 @@ export default function TextInspector() {
   function handleAnalyze(value: string) {
     if (!value.trim()) return;
     setAnalyzing(true);
-    setMl({ status: "idle" });
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       setSubmitted(value);
@@ -73,30 +64,11 @@ export default function TextInspector() {
   function handleClear() {
     setText("");
     setSubmitted("");
-    setMl({ status: "idle" });
   }
 
   function loadSample(sample: string) {
     setText(sample);
     handleAnalyze(sample);
-  }
-
-  async function handleMlCheck() {
-    if (!submitted) return;
-    setMl({ status: "loading", message: "Preparing the model download..." });
-    try {
-      const mod = await import("@/lib/mlDetector");
-      const result = await mod.runMlDetector(submitted, (message) =>
-        setMl({ status: "loading", message })
-      );
-      setMl({ status: "done", result });
-    } catch {
-      setMl({
-        status: "error",
-        message:
-          "The open-source ML model could not be loaded or run in this browser. This can happen when the model files are unavailable, the browser blocks the download, or the device is short on memory. The main heuristic report above is unaffected and stays the primary result.",
-      });
-    }
   }
 
   function downloadReport() {
@@ -259,68 +231,18 @@ export default function TextInspector() {
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5">
-            <h3 className="font-semibold text-slate-900">
-              Optional: open-source ML detector check
-            </h3>
+            <h3 className="font-semibold text-slate-900">Your data stays in this project</h3>
             <p className="mt-1 text-sm text-slate-600">
-              This runs a real RoBERTa detector model in your browser using Transformers.js. The
-              model files download once from Hugging Face and are cached by your browser. The model
-              was trained on older GPT-2 and ChatGPT era text, so treat its result as a weak extra
-              signal, not as a verdict.
+              This tool uses no third-party service, no outside API, and no downloaded model. All
+              scoring code lives inside this repository, in src/lib/textAnalyzer.ts, and runs in
+              your browser on your own device. Your text is never sent anywhere, never stored,
+              and disappears when you close the tab.
             </p>
-            {ml.status !== "done" && (
-              <button
-                type="button"
-                onClick={handleMlCheck}
-                disabled={ml.status === "loading"}
-                className="mt-3 min-h-11 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
-              >
-                {ml.status === "loading"
-                  ? "Loading model..."
-                  : "Run open-source ML detector (downloads model once)"}
-              </button>
-            )}
-            {ml.status === "loading" && (
-              <p role="status" className="mt-3 text-sm text-slate-700">
-                {ml.message}
-              </p>
-            )}
-            {ml.status === "error" && (
-              <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-                {ml.message}
-              </p>
-            )}
-            {ml.status === "done" && (
-              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                  Model: {ml.result.model}
-                </p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">
-                  {ml.result.aiProbability}%{" "}
-                  <span className="text-base font-medium text-slate-600">
-                    AI probability from this model
-                  </span>
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Human probability from this model: {ml.result.humanProbability}%. Raw label:{" "}
-                  {ml.result.label}.
-                  {ml.result.truncated
-                    ? " Long text was scored on its opening section only, because the model has an input limit."
-                    : ""}
-                </p>
-                <p className="mt-2 text-sm text-amber-900">
-                  Caveat: this model was trained on older GPT-2 and ChatGPT era text and is
-                  unreliable on modern models. Its score is not proof of anything.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleMlCheck}
-                  className="mt-3 min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
-                >
-                  Run it again
-                </button>
-              </div>
-            )}
+            <p className="mt-2 text-sm text-slate-600">
+              The methods listed below are published research ideas. Their papers and open-source
+              projects were used as references only, and the scoring here is original code written
+              for this project.
+            </p>
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5">

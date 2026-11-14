@@ -34,9 +34,9 @@ const METHOD_SOURCES = [
     method: "A RoBERTa classifier from the GPT-2 era. Weak on modern models, and labelled as such wherever it is used here.",
   },
   {
-    name: "Transformers.js",
-    url: "https://github.com/huggingface/transformers.js",
-    method: "Runs Hugging Face classification models inside the browser with ONNX and WebAssembly, which powers the optional ML check in the text tool.",
+    name: "CrawlAI local engine (in this repo)",
+    url: "https://github.com/ahmedrazasahoo/crawlai",
+    method: "All analysis code lives in this repository and runs on the visitor device. No outside service is called and no model is downloaded.",
   },
 ];
 
@@ -85,8 +85,8 @@ const SECTIONS = [
     title: "Open-source detector methods and sources",
     body: [
       "CrawlAI's main text score is original code written for this tool. Its design takes method ideas from published open research: perplexity style predictability, burstiness, and classifier style phrase and stylometry signals. No code was copied from those projects.",
-      "Fast-DetectGPT (ICLR 2024) speeds up probability curvature checking. Binoculars (ICML 2024) compares perplexity across two models as a ratio. DetectGPT is the original probability curvature method. The RoBERTa detectors from Hello-SimpleAI and OpenAI are trained classifiers, and Transformers.js is what lets a model like that run inside a browser.",
-      "The optional ML check in the text tool uses the RoBERTa base OpenAI detector through Transformers.js. That model dates from the GPT-2 era, with a ChatGPT era sibling trained on the HC3 dataset, and it is weak on modern model output. Its card in the report is labelled with exactly that caveat.",
+      "Fast-DetectGPT (ICLR 2024) speeds up probability curvature checking. Binoculars (ICML 2024) compares perplexity across two models as a ratio. DetectGPT is the original probability curvature method. The RoBERTa detectors from Hello-SimpleAI and OpenAI are trained classifiers, Those projects were used as research references only.",
+      "CrawlAI itself calls no outside service. Every score is computed by original code inside this repository, running locally in the browser, so user text and files never leave the device and no model is downloaded.",
     ],
   },
   {

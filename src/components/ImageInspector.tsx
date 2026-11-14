@@ -154,9 +154,9 @@ export default function ImageInspector() {
             <img
               src={report.previewUrl}
               alt="Preview of the image you selected for inspection"
-              className="max-h-64 w-full rounded-xl border border-slate-200 object-contain"
+              className="max-h-64 w-full rounded-2xl border border-slate-200 object-contain shadow-sm"
             />
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="panel p-4 sm:p-5">
               <p className="font-semibold text-slate-900">File summary</p>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between gap-4">
@@ -199,7 +199,7 @@ export default function ImageInspector() {
                 detail={report.aiDetail}
               />
             </div>
-            <div className="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-4 text-sm text-slate-800">
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
               <p className="font-semibold">Important note about SynthID</p>
               <p className="mt-1">{SYNTHID_NOTE}</p>
               <p className="mt-2">{GENERAL_CAVEAT}</p>

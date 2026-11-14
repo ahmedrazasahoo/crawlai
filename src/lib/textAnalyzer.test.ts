@@ -8,6 +8,7 @@ import {
   findFormulaicPhrases,
   findRepeatedTrigrams,
   lexicalDiversity,
+  replaceSentence,
   tokenizeWords,
 } from "./textAnalyzer";
 
@@ -182,6 +183,58 @@ describe("per-sentence analysis", () => {
       expect(s.reasons.length).toBeGreaterThan(0);
       expect(s.improvement.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("replaceSentence (user edit workspace)", () => {
+  const doc = "The pump failed on Monday. It is important to note that repairs are crucial. Tom fixed it in 40 minutes.";
+
+  it("replaces the sentence at the given index and keeps the others intact", () => {
+    const result = replaceSentence(doc, 1, "We ordered a new seal for 6 dollars on Tuesday.");
+    expect(result).toBe(
+      "The pump failed on Monday. We ordered a new seal for 6 dollars on Tuesday. Tom fixed it in 40 minutes."
+    );
+  });
+
+  it("replaces the first and the last sentence", () => {
+    expect(replaceSentence(doc, 0, "A seal cracked last week.")).toContain("A seal cracked last week.");
+    expect(replaceSentence(doc, 2, "Done by lunch.")).toContain("Done by lunch.");
+    expect(replaceSentence(doc, 2, "Done by lunch.")).not.toContain("Tom fixed it");
+  });
+
+  it("keeps question and exclamation punctuation on untouched sentences", () => {
+    const result = replaceSentence("Did it leak? Yes, badly! We fixed it.", 2, "We sealed it.");
+    expect(result).toBe("Did it leak? Yes, badly! We sealed it.");
+  });
+
+  it("returns the text unchanged for an out of range index", () => {
+    expect(replaceSentence(doc, 9, "Anything at all.")).toBe(doc);
+    expect(replaceSentence(doc, -1, "Anything at all.")).toBe(doc);
+  });
+
+  it("supports a user replacement that itself has two sentences", () => {
+    const result = replaceSentence(doc, 1, "We called a plumber. He quoted 90 dollars.");
+    const sentences = analyzeSentences(result);
+    expect(sentences).toHaveLength(4);
+    expect(sentences[1].text).toContain("plumber");
+    expect(sentences[2].text).toContain("90 dollars");
+  });
+
+  it("removes a sentence only when the user clears it", () => {
+    const result = replaceSentence(doc, 1, "   ");
+    expect(result).toBe("The pump failed on Monday. Tom fixed it in 40 minutes.");
+  });
+
+  it("an applied user edit changes the re-run analysis", () => {
+    const before = analyzeText(doc);
+    const edited = replaceSentence(
+      doc,
+      1,
+      "Dad and I pulled the unit out at 7 am and found a split hose behind the drum, part 47B."
+    );
+    const after = analyzeText(edited);
+    expect(after.sentences[1].level).toBe("human");
+    expect(after.overall.aiScore).toBeLessThanOrEqual(before.overall.aiScore);
   });
 });
 

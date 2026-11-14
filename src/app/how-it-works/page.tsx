@@ -24,14 +24,14 @@ const METHOD_SOURCES = [
     method: "The original probability curvature method: AI text tends to sit at a local peak of model probability.",
   },
   {
-    name: "chatgpt-detector-roberta (Hello-SimpleAI)",
-    url: "https://huggingface.co/Hello-SimpleAI/chatgpt-detector-roberta",
-    method: "A RoBERTa classifier fine tuned on the HC3 human and ChatGPT comparison dataset.",
+    name: "chatgpt-comparison-detection (Hello-SimpleAI)",
+    url: "https://github.com/Hello-SimpleAI/chatgpt-comparison-detection",
+    method: "The HC3 dataset of human and ChatGPT answers, used to train RoBERTa style classifiers. A method reference only, CrawlAI runs no external model.",
   },
   {
-    name: "roberta-base-openai-detector (OpenAI)",
-    url: "https://huggingface.co/openai-community/roberta-base-openai-detector",
-    method: "A RoBERTa classifier from the GPT-2 era. Weak on modern models, and labelled as such wherever it is used here.",
+    name: "gpt-2-output-dataset (OpenAI)",
+    url: "https://github.com/openai/gpt-2-output-dataset",
+    method: "OpenAI's GPT-2 era detector research. Its classifier approach is a method reference only, and it is weak on modern model output.",
   },
   {
     name: "CrawlAI local engine (in this repo)",
@@ -92,7 +92,7 @@ const SECTIONS = [
   {
     title: "What CrawlAI does not do",
     body: [
-      "CrawlAI is a reporting tool. It does not remove metadata, watermarks, or credentials from any file. It does not rewrite, paraphrase, or polish text. The file you inspect is never changed by this tool.",
+      "CrawlAI is a reporting tool. It does not remove metadata, watermarks, or credentials from any file. It does not rewrite, paraphrase, or polish text. The text workspace only applies replacement sentences that you type yourself, to a copy, so you can see the measurements change. The file you inspect is never changed by this tool.",
       "If you publish content, the useful response to a report is transparency and quality: check your facts, credit your sources, keep your own drafts and source files, and say how a piece was made when readers would reasonably want to know.",
     ],
   },
@@ -110,7 +110,7 @@ export default function HowItWorksPage() {
         file, and where the limits are, so you can read a report with the right level of confidence.
       </p>
 
-      <div className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900">
+      <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900 shadow-sm">
         <p className="font-semibold">The short version</p>
         <p className="mt-1">
           A provenance marker that is found is real information about the file. A marker that is not
@@ -121,7 +121,7 @@ export default function HowItWorksPage() {
 
       <div className="mt-8 space-y-8">
         {SECTIONS.map((section) => (
-          <section key={section.title} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <section key={section.title} className="panel p-5 sm:p-6">
             <h2 className="text-xl font-semibold text-slate-950">{section.title}</h2>
             {section.body.map((paragraph) => (
               <p key={paragraph.slice(0, 32)} className="mt-3 text-sm leading-6 text-slate-700 sm:text-base">
@@ -151,7 +151,7 @@ export default function HowItWorksPage() {
         </ul>
       </section>
 
-      <div className="mt-8 rounded-2xl bg-slate-950 p-6 text-white">
+      <div className="relative mt-8 overflow-hidden rounded-3xl bg-slate-950 p-6 text-white shadow-xl shadow-slate-950/20 sm:p-8">
         <h2 className="text-lg font-semibold">Try a check</h2>
         <p className="mt-2 text-sm text-slate-300">
           Pick an image, a PDF, a video, an audio file, or a piece of text, and see exactly what

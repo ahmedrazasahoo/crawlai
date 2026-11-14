@@ -170,7 +170,7 @@ export default function FileInspector() {
       )}
       {report && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="panel p-4 sm:p-5">
             <p className="font-semibold text-slate-900">File summary</p>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between gap-4">
@@ -206,7 +206,7 @@ export default function FileInspector() {
               />
               <VerdictCard title="AI source metadata" found={report.aiFound} detail={report.aiDetail} />
             </div>
-            <div className="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-4 text-sm text-slate-800">
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
               <p className="font-semibold">What this scan can and cannot do</p>
               <p className="mt-1">
                 This scan reads readable metadata and container strings. It cannot check an invisible

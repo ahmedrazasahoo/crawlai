@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f6f8f7;
   --foreground: #0f172a;
 }
 
@@ -12,8 +12,39 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1100px 480px at 85% -10%, rgba(16, 185, 129, 0.08), transparent 60%),
+    radial-gradient(900px 420px at -10% 0%, rgba(15, 23, 42, 0.05), transparent 55%),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.28);
+}
+
+@layer components {
+  /* Shared card surface for tool panels and report sections. */
+  .panel {
+    @apply rounded-2xl border border-slate-200/80 bg-white;
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.05),
+      0 16px 40px -24px rgba(15, 23, 42, 0.18);
+  }
+
+  /* Gradient brand tile used for the logo mark and step badges. */
+  .brand-tile {
+    background-image: linear-gradient(135deg, #34d399 0%, #10b981 45%, #0d9488 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 8px 20px -8px rgba(16, 185, 129, 0.65);
+  }
 }

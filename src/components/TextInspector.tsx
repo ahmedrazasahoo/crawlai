@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { analyzeText, tokenizeWords, type TextAnalysis } from "@/lib/textAnalyzer";
+import {
+  analyzeText,
+  replaceSentence,
+  tokenizeWords,
+  type SentenceAnalysis,
+  type TextAnalysis,
+} from "@/lib/textAnalyzer";
 
 const AI_LIKE_SAMPLE =
   "Furthermore, it is important to note that technology plays a crucial role in our daily lives. Moreover, in today's fast-paced world, it is essential to delve into the wide range of benefits that technology offers. Additionally, technology has transformed the landscape of communication in many significant ways. In conclusion, it is important to note that technology is a pivotal part of the modern world, and its impact will continue to grow in the future.";
@@ -26,14 +32,14 @@ const METHODS = [
     method: "The original probability curvature method: AI text tends to sit at a local peak of model probability.",
   },
   {
-    name: "chatgpt-detector-roberta (Hello-SimpleAI)",
-    url: "https://huggingface.co/Hello-SimpleAI/chatgpt-detector-roberta",
-    method: "A RoBERTa classifier fine tuned on the HC3 human and ChatGPT comparison dataset.",
+    name: "chatgpt-comparison-detection (Hello-SimpleAI)",
+    url: "https://github.com/Hello-SimpleAI/chatgpt-comparison-detection",
+    method: "The HC3 dataset of human and ChatGPT answers, used to train RoBERTa style classifiers. Referenced for method ideas only, CrawlAI runs no external model.",
   },
   {
-    name: "roberta-base-openai-detector (OpenAI)",
-    url: "https://huggingface.co/openai-community/roberta-base-openai-detector",
-    method: "A RoBERTa classifier from the GPT-2 era. Weak on modern models, and labelled as such wherever it is used here.",
+    name: "gpt-2-output-dataset (OpenAI)",
+    url: "https://github.com/openai/gpt-2-output-dataset",
+    method: "OpenAI's GPT-2 era detector research. Its classifier approach is a method reference only, and it is weak on modern model output.",
   },
   {
     name: "CrawlAI local engine (in this repo)",
@@ -45,10 +51,23 @@ const METHODS = [
 export default function TextInspector() {
   const [text, setText] = useState("");
   const [submitted, setSubmitted] = useState("");
+  const [workingText, setWorkingText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [draft, setDraft] = useState("");
+  const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editorRef = useRef<HTMLElement | null>(null);
 
-  const analysis = useMemo(() => (submitted ? analyzeText(submitted) : null), [submitted]);
+  const analysis = useMemo(() => (workingText ? analyzeText(workingText) : null), [workingText]);
+  const originalEstimate = useMemo(
+    () => (submitted ? analyzeText(submitted).overall : null),
+    [submitted]
+  );
+  const hasEdits = workingText !== "" && workingText !== submitted;
+  const selectedSentence: SentenceAnalysis | null =
+    analysis && selectedIndex !== null ? (analysis.sentences[selectedIndex] ?? null) : null;
   const liveWordCount = useMemo(() => tokenizeWords(text).length, [text]);
 
   function handleAnalyze(value: string) {
@@ -57,6 +76,10 @@ export default function TextInspector() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       setSubmitted(value);
+      setWorkingText(value);
+      setSelectedIndex(null);
+      setDraft("");
+      setCopied(false);
       setAnalyzing(false);
     }, 400);
   }
@@ -64,6 +87,79 @@ export default function TextInspector() {
   function handleClear() {
     setText("");
     setSubmitted("");
+    setWorkingText("");
+    setSelectedIndex(null);
+    setDraft("");
+    setCopied(false);
+  }
+
+  function selectSentence(index: number, scroll: boolean) {
+    if (!analysis) return;
+    const sentence = analysis.sentences[index];
+    if (!sentence) return;
+    setSelectedIndex(index);
+    setDraft(sentence.text);
+    if (scroll) {
+      requestAnimationFrame(() => {
+        editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }
+
+  function applyMyEdit() {
+    if (selectedIndex === null || !analysis) return;
+    const current = analysis.sentences[selectedIndex];
+    if (!current || draft === current.text) return;
+    const next = replaceSentence(workingText, selectedIndex, draft);
+    setWorkingText(next);
+    setCopied(false);
+    const nextAnalysis = analyzeText(next);
+    const nextSentence = nextAnalysis.sentences[selectedIndex];
+    if (nextSentence) {
+      setDraft(nextSentence.text);
+    } else if (nextAnalysis.sentences.length > 0) {
+      const fallback = Math.min(selectedIndex, nextAnalysis.sentences.length - 1);
+      setSelectedIndex(fallback);
+      setDraft(nextAnalysis.sentences[fallback].text);
+    } else {
+      setSelectedIndex(null);
+      setDraft("");
+    }
+  }
+
+  function resetToOriginal() {
+    setWorkingText(submitted);
+    setSelectedIndex(null);
+    setDraft("");
+    setCopied(false);
+  }
+
+  async function copyFinalText() {
+    if (!workingText) return;
+    try {
+      await navigator.clipboard.writeText(workingText);
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = workingText;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      document.body.removeChild(area);
+    }
+    setCopied(true);
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopied(false), 2500);
+  }
+
+  function downloadFinalText() {
+    if (!workingText) return;
+    const blob = new Blob([workingText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "crawlai-my-edited-text.txt";
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   function loadSample(sample: string) {
@@ -72,8 +168,8 @@ export default function TextInspector() {
   }
 
   function downloadReport() {
-    if (!analysis || !submitted) return;
-    const blob = new Blob([buildReportText(analysis, submitted)], {
+    if (!analysis || !workingText) return;
+    const blob = new Blob([buildReportText(analysis, workingText)], {
       type: "text/plain;charset=utf-8",
     });
     const url = URL.createObjectURL(blob);
@@ -91,8 +187,9 @@ export default function TextInspector() {
           Paste text to inspect
         </label>
         <p className="mt-1 text-sm text-slate-600">
-          This gives you a feedback report only. It does not rewrite, paraphrase, or change your
-          text in any way, and it runs entirely in your browser.
+          This gives you a feedback report. It never rewrites, paraphrases, or changes your text
+          for you. After the report, an edit workspace lets you rewrite sentences yourself, in
+          your own words, and see the estimate update. Everything runs in your browser.
         </p>
         <textarea
           id="text-input"
@@ -164,7 +261,7 @@ export default function TextInspector() {
 
       {analysis && (
         <div className="space-y-6">
-          <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <section className="panel p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <h3 className="font-semibold text-slate-900">Overall pattern estimate</h3>
               <div className="flex flex-wrap gap-2 text-xs">
@@ -175,8 +272,20 @@ export default function TextInspector() {
                   Confidence: {analysis.overall.confidence}
                   {analysis.overall.confidence === "Low" ? " (short text, treat with care)" : ""}
                 </span>
+                {hasEdits && (
+                  <span className="rounded-full bg-emerald-600 px-2.5 py-1 font-semibold text-white">
+                    Showing your edited copy
+                  </span>
+                )}
               </div>
             </div>
+            {hasEdits && originalEstimate && (
+              <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200">
+                Your original text scored {originalEstimate.aiScore}% AI-pattern. Your edited
+                copy now scores {analysis.overall.aiScore}%. The change comes only from the edits
+                you typed yourself.
+              </p>
+            )}
 
             <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
               <Donut aiScore={analysis.overall.aiScore} />
@@ -190,7 +299,7 @@ export default function TextInspector() {
                   </div>
                   <div className="mt-1 h-4 w-full overflow-hidden rounded-full bg-red-100">
                     <div
-                      className="h-full rounded-full bg-red-500"
+                      className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-600 transition-all duration-500"
                       style={{ width: `${analysis.overall.aiScore}%` }}
                     />
                   </div>
@@ -204,7 +313,7 @@ export default function TextInspector() {
                   </div>
                   <div className="mt-1 h-4 w-full overflow-hidden rounded-full bg-emerald-100">
                     <div
-                      className="h-full rounded-full bg-emerald-500"
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-500"
                       style={{ width: `${analysis.overall.humanScore}%` }}
                     />
                   </div>
@@ -230,7 +339,7 @@ export default function TextInspector() {
             </button>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <section className="panel p-5 sm:p-6">
             <h3 className="font-semibold text-slate-900">Your data stays in this project</h3>
             <p className="mt-1 text-sm text-slate-600">
               This tool uses no third-party service, no outside API, and no downloaded model. All
@@ -245,7 +354,7 @@ export default function TextInspector() {
             </p>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <section className="panel p-5 sm:p-6">
             <div className="sticky top-2 z-10 rounded-lg bg-white/95 py-1 backdrop-blur">
               <h3 className="font-semibold text-slate-900">Your text, sentence by sentence</h3>
               <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
@@ -262,12 +371,31 @@ export default function TextInspector() {
                 </span>
               </div>
             </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Tip: select any sentence to open it in the Edit and improve workspace below. You
+              write the replacement yourself, CrawlAI only re-measures it.
+            </p>
             <p className="mt-3 text-[15px] leading-8 text-slate-900">
               {analysis.sentences.map((sentence) => (
                 <span
                   key={sentence.index}
-                  title={`${sentence.levelLabel}: ${sentence.score}%`}
-                  className={`mr-1 rounded px-1 py-0.5 ${
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={selectedIndex === sentence.index}
+                  aria-label={`Select sentence ${sentence.index + 1} to edit it yourself. ${sentence.levelLabel}: ${sentence.score} percent`}
+                  title={`${sentence.levelLabel}: ${sentence.score}%. Activate to edit this sentence yourself.`}
+                  onClick={() => selectSentence(sentence.index, true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      selectSentence(sentence.index, true);
+                    }
+                  }}
+                  className={`mr-1 cursor-pointer rounded px-1 py-0.5 transition hover:ring-2 hover:ring-slate-400 focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:outline-none ${
+                    selectedIndex === sentence.index
+                      ? "ring-2 ring-slate-900"
+                      : ""
+                  } ${
                     sentence.level === "high"
                       ? "bg-red-100"
                       : sentence.level === "mixed"
@@ -281,7 +409,7 @@ export default function TextInspector() {
             </p>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <section className="panel p-5 sm:p-6">
             <h3 className="font-semibold text-slate-900">Where to look first</h3>
             <p className="mt-1 text-sm text-slate-600">
               Sentences with the strongest AI-like patterns, highest score first. Each one lists why
@@ -326,6 +454,13 @@ export default function TextInspector() {
                     <p className="mt-2 text-sm text-slate-700">
                       <strong>Strengthen it:</strong> {sentence.improvement}
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => selectSentence(sentence.index, true)}
+                      className="mt-3 min-h-11 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                    >
+                      Edit this sentence myself
+                    </button>
                   </li>
                 ))}
               </ol>
@@ -353,6 +488,177 @@ export default function TextInspector() {
             )}
           </section>
 
+          <section
+            ref={editorRef}
+            aria-label="Edit and improve workspace"
+            className="panel scroll-mt-28 p-5 sm:p-6"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-2xl">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Edit and improve: your words, your edits
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  CrawlAI never writes, rewrites, or removes text for you. Pick a sentence, type
+                  your own replacement in your own words, apply it, and the dashboard, highlighting,
+                  and scores above update straight away so you can see what your edit changed.
+                </p>
+              </div>
+              {hasEdits && (
+                <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+                  You have edited this copy
+                </span>
+              )}
+            </div>
+
+            <div className="mt-5">
+              <p id="sentence-picker-label" className="text-sm font-medium text-slate-900">
+                Choose a sentence to edit
+              </p>
+              <div role="group" aria-labelledby="sentence-picker-label" className="mt-2 flex flex-wrap gap-2">
+                {analysis.sentences.map((sentence) => (
+                  <button
+                    key={sentence.index}
+                    type="button"
+                    onClick={() => selectSentence(sentence.index, false)}
+                    aria-pressed={selectedIndex === sentence.index}
+                    className={`flex min-h-11 items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
+                      selectedIndex === sentence.index
+                        ? "bg-slate-950 text-white"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        sentence.level === "high"
+                          ? "bg-red-500"
+                          : sentence.level === "mixed"
+                            ? "bg-amber-500"
+                            : "bg-emerald-500"
+                      }`}
+                    />
+                    {sentence.index + 1} · {sentence.score}%
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {selectedSentence ? (
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Sentence {selectedSentence.index + 1} of {analysis.sentences.length}
+                  </p>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold text-white ${
+                      selectedSentence.level === "high"
+                        ? "bg-red-600"
+                        : selectedSentence.level === "mixed"
+                          ? "bg-amber-500"
+                          : "bg-emerald-600"
+                    }`}
+                  >
+                    {selectedSentence.score}% · {selectedSentence.levelLabel}
+                  </span>
+                </div>
+
+                <p className="mt-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  Why it was flagged
+                </p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                  {selectedSentence.reasons.map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-sm text-slate-700">
+                  <strong>Strengthen it:</strong> {selectedSentence.improvement} Vary the rhythm
+                  too: a short sentence after a long one often reads as more human.
+                </p>
+
+                <label
+                  htmlFor="sentence-editor"
+                  className="mt-4 block text-sm font-medium text-slate-900"
+                >
+                  Your replacement, in your own words
+                </label>
+                <textarea
+                  id="sentence-editor"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  rows={4}
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3.5 text-base text-slate-900 shadow-inner outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                />
+                <div className="mt-1 flex justify-end text-xs text-slate-500" aria-live="polite">
+                  {tokenizeWords(draft).length}{" "}
+                  {tokenizeWords(draft).length === 1 ? "word" : "words"} in your replacement
+                </div>
+                <div className="mt-2 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={applyMyEdit}
+                    disabled={draft === selectedSentence.text}
+                    className="min-h-11 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Apply my edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDraft(selectedSentence.text)}
+                    disabled={draft === selectedSentence.text}
+                    className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Undo changes in this box
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Applying swaps only this sentence in your working copy. Nothing is uploaded, and
+                  your original pasted text stays untouched until you reset or clear.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
+                No sentence selected yet. Use the numbered chips above, the Edit buttons in Where
+                to look first, or select a sentence in the highlighted text.
+              </p>
+            )}
+
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <p className="text-sm font-medium text-slate-900">Take your edited text with you</p>
+              <p className="mt-1 text-sm text-slate-600">
+                These exports contain your text exactly as you edited it, word for word. CrawlAI
+                added nothing to it.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={copyFinalText}
+                  className="min-h-11 rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                >
+                  Copy my final text
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadFinalText}
+                  className="min-h-11 rounded-xl border border-slate-950 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                >
+                  Download my final text (.txt)
+                </button>
+                <button
+                  type="button"
+                  onClick={resetToOriginal}
+                  disabled={!hasEdits}
+                  className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Reset to my original text
+                </button>
+                <span role="status" aria-live="polite" className="text-sm font-medium text-emerald-700">
+                  {copied ? "Copied. Your edited text is on the clipboard." : ""}
+                </span>
+              </div>
+            </div>
+          </section>
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Words" value={String(analysis.wordCount)} />
             <StatCard label="Sentences" value={String(analysis.sentenceCount)} />
@@ -364,7 +670,7 @@ export default function TextInspector() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <section className="panel p-5 sm:p-6">
               <h3 className="font-semibold text-slate-900">Burstiness: sentence length variation</h3>
               <p className="mt-2 text-sm text-slate-700">
                 Score: <strong>{analysis.burstiness.label}</strong>
@@ -387,7 +693,7 @@ export default function TextInspector() {
               )}
             </section>
 
-            <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <section className="panel p-5 sm:p-6">
               <h3 className="font-semibold text-slate-900">Lexical diversity</h3>
               <p className="mt-2 text-sm text-slate-700">
                 <strong>{analysis.lexicalDiversity}</strong> ({analysis.uniqueWordCount} unique
@@ -407,7 +713,7 @@ export default function TextInspector() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <section className="panel p-5 sm:p-6">
               <h3 className="font-semibold text-slate-900">Formulaic phrases found</h3>
               <p className="mt-1 text-sm text-slate-600">
                 Total matches: {analysis.formulaicTotal}. These are common stock phrases that appear
@@ -430,7 +736,7 @@ export default function TextInspector() {
               )}
             </section>
 
-            <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <section className="panel p-5 sm:p-6">
               <h3 className="font-semibold text-slate-900">Repeated 3 word phrases</h3>
               <p className="mt-1 text-sm text-slate-600">
                 Phrases of three words that appear more than once. Repetition is normal for key
@@ -461,7 +767,7 @@ export default function TextInspector() {
             </p>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <section className="panel p-5 sm:p-6">
             <h3 className="font-semibold text-slate-900">Legitimate ways to improve this writing</h3>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
               <li>Add specific facts, numbers, dates, and names that you have checked yourself.</li>
@@ -475,7 +781,7 @@ export default function TextInspector() {
         </div>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5">
+      <section className="panel p-5 sm:p-6">
         <h3 className="font-semibold text-slate-900">Methods and sources</h3>
         <p className="mt-1 text-sm text-slate-600">
           CrawlAI&apos;s main score is original code. It combines perplexity style predictability
@@ -508,23 +814,40 @@ function Donut({ aiScore }: { aiScore: number }) {
   const circumference = 2 * Math.PI * radius;
   const aiLength = (aiScore / 100) * circumference;
   return (
-    <div className="relative h-32 w-32 shrink-0" role="img" aria-label={`AI pattern ${aiScore} percent, human pattern ${100 - aiScore} percent`}>
-      <svg viewBox="0 0 120 120" className="h-32 w-32 -rotate-90">
-        <circle cx="60" cy="60" r={radius} fill="none" strokeWidth="14" className="stroke-emerald-400" />
+    <div
+      className="relative h-36 w-36 shrink-0 drop-shadow-sm"
+      role="img"
+      aria-label={`AI pattern ${aiScore} percent, human pattern ${100 - aiScore} percent`}
+    >
+      <svg viewBox="0 0 120 120" className="h-36 w-36 -rotate-90">
+        <defs>
+          <linearGradient id="donut-human" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#34d399" />
+            <stop offset="100%" stopColor="#059669" />
+          </linearGradient>
+          <linearGradient id="donut-ai" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#f87171" />
+            <stop offset="100%" stopColor="#dc2626" />
+          </linearGradient>
+        </defs>
+        <circle cx="60" cy="60" r={radius} fill="none" strokeWidth="13" stroke="url(#donut-human)" />
         <circle
           cx="60"
           cy="60"
           r={radius}
           fill="none"
-          strokeWidth="14"
+          strokeWidth="13"
           strokeLinecap="butt"
           strokeDasharray={`${aiLength} ${circumference}`}
-          className="stroke-red-500"
+          stroke="url(#donut-ai)"
+          className="transition-all duration-500"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-slate-900">{aiScore}%</span>
-        <span className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">AI-pattern</span>
+        <span className="text-3xl font-bold tracking-tight text-slate-900">{aiScore}%</span>
+        <span className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">
+          AI-pattern
+        </span>
       </div>
     </div>
   );
@@ -558,7 +881,7 @@ function buildReportText(analysis: TextAnalysis, original: string): string {
     for (const reason of s.reasons) lines.push(`  Reason: ${reason}`);
     lines.push(`  Strengthen it: ${s.improvement}`);
   }
-  lines.push("", "Original text as pasted:", "", original, "");
+  lines.push("", "Text as analyzed (the working copy shown on screen, including any edits the user typed):", "", original, "");
   return lines.join("\n");
 }
 
@@ -568,7 +891,7 @@ function flaggedSentences<T extends { level: string; score: number }>(sentences:
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="panel p-4 sm:p-5">
       <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{label}</p>
       <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
     </div>

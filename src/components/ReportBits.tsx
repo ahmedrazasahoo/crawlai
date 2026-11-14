@@ -13,8 +13,8 @@ export function VerdictCard({
     <div
       className={
         found
-          ? "rounded-xl border border-amber-300 bg-amber-50 p-4"
-          : "rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+          ? "rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm"
+          : "rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm"
       }
     >
       <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{title}</p>
@@ -31,7 +31,7 @@ export function MetadataTable({ rows, emptyText }: { rows: FieldRow[]; emptyText
     return <p className="text-sm text-slate-600">{emptyText}</p>;
   }
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
       <table className="w-full min-w-[420px] text-left text-sm">
         <thead className="bg-slate-100">
           <tr>
@@ -86,7 +86,7 @@ export function FileDropZone({
     >
       <p className="font-medium text-slate-900">{label}</p>
       <p className="mt-1 text-sm text-slate-600">{hint}</p>
-      <label className="mt-4 inline-block cursor-pointer rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+      <label className="mt-4 inline-flex min-h-11 cursor-pointer items-center rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800">
         Choose a file
         <input
           type="file"

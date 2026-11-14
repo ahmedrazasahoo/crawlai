@@ -234,6 +234,45 @@ export function splitSentencesKeepPunctuation(text: string): string[] {
   return matches.map((s) => s.trim()).filter((s) => tokenizeWords(s).length > 0);
 }
 
+// Replace one sentence, identified by the same index that
+// splitSentencesKeepPunctuation and analyzeSentences use, with text the user
+// typed themselves. Everything else in the document, including the spacing
+// between sentences, is preserved exactly. If the index does not match a
+// sentence, the original text is returned unchanged. An empty replacement
+// removes that sentence from the copy, again only because the user chose to
+// clear it. This function never generates wording of its own.
+export function replaceSentence(text: string, index: number, replacement: string): string {
+  if (index < 0) return text;
+  const regex = /[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g;
+  const parts: string[] = [];
+  let cursor = 0;
+  let sentenceIndex = -1;
+  let replaced = false;
+
+  for (const match of text.matchAll(regex)) {
+    const start = match.index ?? 0;
+    const raw = match[0];
+    parts.push(text.slice(cursor, start));
+    const trimmed = raw.trim();
+    const isSentence = tokenizeWords(trimmed).length > 0;
+    if (isSentence) sentenceIndex += 1;
+
+    if (isSentence && sentenceIndex === index && !replaced) {
+      const leading = raw.slice(0, raw.length - raw.trimStart().length);
+      const trailing = raw.slice(leading.length + trimmed.length);
+      parts.push(leading + replacement.trim() + trailing);
+      replaced = true;
+    } else {
+      parts.push(raw);
+    }
+    cursor = start + raw.length;
+  }
+  parts.push(text.slice(cursor));
+
+  if (!replaced) return text;
+  return parts.join("").replace(/[ \t]{2,}/g, " ").trim();
+}
+
 export function classifyScore(score: number): { level: PatternLevel; levelLabel: string } {
   if (score >= 65) return { level: "high", levelLabel: "High AI-pattern" };
   if (score >= 40) return { level: "mixed", levelLabel: "Mixed patterns" };

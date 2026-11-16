@@ -13,7 +13,7 @@ import {
   snippetAround,
   type FieldRow,
 } from "@/lib/byteScan";
-import { FileDropZone, MetadataTable, VerdictCard } from "./ReportBits";
+import { FileDropZone, MetadataTable, ReportSummaryStrip, VerdictCard } from "./ReportBits";
 
 interface FileReport {
   fileName: string;
@@ -170,6 +170,26 @@ export default function FileInspector() {
       )}
       {report && (
         <div className="space-y-6">
+          {(() => {
+            const checks = [
+              report.c2paFound,
+              report.aiFound,
+              report.rows.length > 0,
+              report.rows.some(
+                (row) =>
+                  row.field.startsWith("Provenance indicator") ||
+                  row.field.startsWith("Generator name")
+              ),
+            ];
+            const findings = checks.filter(Boolean).length;
+            return (
+              <ReportSummaryStrip
+                checksRun={checks.length}
+                findingsFound={findings}
+                cleanChecks={checks.length - findings}
+              />
+            );
+          })()}
           <div className="panel p-4 sm:p-5">
             <p className="font-semibold text-slate-900">File summary</p>
             <dl className="mt-3 space-y-2 text-sm">

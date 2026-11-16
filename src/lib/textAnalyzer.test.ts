@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   analyzeSentences,
@@ -250,5 +251,46 @@ describe("analyzeText", () => {
     const result = analyzeText("");
     expect(result.wordCount).toBe(0);
     expect(result.fleschReadingEase).toBeNull();
+  });
+});
+
+describe("long-form calibration", () => {
+  const civicSample =
+    "I replaced the cracked seal on my 2019 Civic last Tuesday. Took 40 minutes, one 12 mm wrench, and a rag I have owned since college. The leak stopped straight away. My neighbour Tom swears the old seal was the factory one from 2011, and honestly the part number stamped on it, 47B, makes me think he is right. Cost me 6 dollars and a scraped knuckle.";
+  const aiBlogSample =
+    "Furthermore, it is important to note that technology plays a crucial role in our daily lives. Moreover, in today's fast-paced world, it is essential to delve into the wide range of benefits that technology offers. Additionally, technology has transformed the landscape of communication in many significant ways. In conclusion, it is important to note that technology is a pivotal part of the modern world, and its impact will continue to grow in the future.";
+  const specificTechnical =
+    "On 14 March 2025, I replaced the pressure sensor on our Atlas Copco GA11 compressor at the Lahore workshop. The old unit, serial 8841-220, had drifted by 0.7 bar during the night shift, and operator Sana Tariq caught it because the dryer alarm kept chirping at 2:10 am. I isolated the receiver, logged 11.4 bar on gauge PG-3, and photographed the cracked ferrule before touching a spanner. A 17 mm wrench freed the fitting, although the lower bolt fought me for nine minutes and cost one glove. We fitted a WIKA S-20 rated to 16 bar, torqued it to 28 Nm, and leak tested at 6, 9, and 12 bar with soapy water. No bubbles. At 3:45 pm the compressor restarted; discharge temperature settled at 71 C, not the 88 C we saw on Tuesday. My notebook entry runs to 43 lines because the night log missed two resets on 9 March. Foreman Iqbal signed the permit, number PTW-1187, after checking the lockout tag himself. The part cost 18,400 rupees from Industrial Spares on Brandreth Road, invoice 5521, and stores booked the old sensor for failure analysis. Since then the trend export shows pressure variance inside 0.12 bar across 19 days, apart from one dip during the 27 March power cut. I still do not trust the panel gauge, so every Friday I compare it against our Testo 550, calibration certificate PK-991, due again in November. That habit came from a 2022 incident nobody here has forgotten. A gauge lied, a valve lifted, and the line lost 300 litres of oil mist condensate before anyone smelled it. Small numbers, written down at the time, beat confident memories. That is the whole lesson from this job, and it is why my log lists ambient temperature, dew point, and even the radio station playing in the workshop.";
+
+  it("flags the LoRa AI blog fixture as AI-like or high mixed", () => {
+    const fixture = readFileSync(
+      new URL("../../fixtures/lora-ai-article.txt", import.meta.url),
+      "utf8"
+    );
+    const result = analyzeText(fixture);
+    expect(result.wordCount).toBeGreaterThan(2000);
+    expect(result.longForm.isLongForm).toBe(true);
+    expect(result.overall.aiScore).toBeGreaterThanOrEqual(60);
+    expect(["Mixed patterns", "Mostly AI-like patterns"]).toContain(result.overall.verdict);
+    expect(result.longForm.specificityDensity).toBeLessThan(2.5);
+    const featureTotal = result.features.reduce((sum, f) => sum + f.points, 0);
+    expect(Math.abs(featureTotal - result.overall.aiScore)).toBeLessThanOrEqual(1);
+  });
+
+  it("keeps the specific Civic sample in the human range", () => {
+    expect(analyzeText(civicSample).overall.aiScore).toBeLessThan(35);
+  });
+
+  it("scores the AI blog sample above the human sample", () => {
+    expect(analyzeText(aiBlogSample).overall.aiScore).toBeGreaterThan(
+      analyzeText(civicSample).overall.aiScore
+    );
+  });
+
+  it("keeps a specific first-hand technical report in the human range even at long length", () => {
+    const result = analyzeText(specificTechnical);
+    expect(result.wordCount).toBeGreaterThan(300);
+    expect(result.longForm.specificityDensity).toBeGreaterThan(4.2);
+    expect(result.overall.aiScore).toBeLessThan(40);
   });
 });

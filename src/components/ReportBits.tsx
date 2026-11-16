@@ -105,3 +105,72 @@ export function FileDropZone({
     </div>
   );
 }
+
+export function ReportSummaryStrip({
+  checksRun,
+  findingsFound,
+  cleanChecks,
+}: {
+  checksRun: number;
+  findingsFound: number;
+  cleanChecks: number;
+}) {
+  const total = Math.max(1, findingsFound + cleanChecks);
+  const radius = 30;
+  const circumference = 2 * Math.PI * radius;
+  const foundLength = (findingsFound / total) * circumference;
+  const cards = [
+    { label: "Checks run", value: checksRun, tone: "text-[#0b2447]" },
+    { label: "Findings found", value: findingsFound, tone: "text-amber-600" },
+    { label: "Clean checks", value: cleanChecks, tone: "text-emerald-600" },
+  ];
+  return (
+    <section aria-label="Report summary" className="panel p-4 sm:p-5">
+      <div className="flex flex-wrap items-center gap-5">
+        <div
+          className="relative h-20 w-20 shrink-0"
+          role="img"
+          aria-label={`${findingsFound} findings found, ${cleanChecks} clean checks`}
+        >
+          <svg viewBox="0 0 80 80" className="h-20 w-20 -rotate-90">
+            <circle cx="40" cy="40" r={radius} fill="none" strokeWidth="10" stroke="#10b981" />
+            <circle
+              cx="40"
+              cy="40"
+              r={radius}
+              fill="none"
+              strokeWidth="10"
+              stroke="#f59e0b"
+              strokeDasharray={`${foundLength} ${circumference}`}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-sm font-bold text-slate-900">
+              {findingsFound}/{total}
+            </span>
+          </div>
+        </div>
+        <div className="grid flex-1 grid-cols-3 gap-3">
+          {cards.map((card) => (
+            <div key={card.label} className="rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-100">
+              <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+                {card.label}
+              </p>
+              <p className={`mt-0.5 text-2xl font-bold ${card.tone}`}>{card.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-emerald-100" aria-hidden="true">
+        <div
+          className="h-full bg-gradient-to-r from-amber-400 to-red-500 transition-all duration-500"
+          style={{ width: `${(findingsFound / total) * 100}%` }}
+        />
+      </div>
+      <p className="mt-2 text-xs text-slate-500">
+        Amber shows the share of checks that found something. Green is the share that came back
+        clean. A clean check is not proof of anything, it only means this scan found no marker.
+      </p>
+    </section>
+  );
+}

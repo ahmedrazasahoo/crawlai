@@ -13,7 +13,7 @@ import {
   scanIndicators,
   type FieldRow,
 } from "@/lib/byteScan";
-import { FileDropZone, MetadataTable, VerdictCard } from "./ReportBits";
+import { FileDropZone, MetadataTable, ReportSummaryStrip, VerdictCard } from "./ReportBits";
 
 interface ImageReport {
   fileName: string;
@@ -149,6 +149,23 @@ export default function ImageInspector() {
       )}
       {report && (
         <div className="space-y-6">
+          {(() => {
+            const checks = [
+              report.c2paFound,
+              report.aiFound,
+              report.indicatorRows.length > 0,
+              report.metadataRows.length > 0,
+              report.software !== null,
+            ];
+            const findings = checks.filter(Boolean).length;
+            return (
+              <ReportSummaryStrip
+                checksRun={checks.length}
+                findingsFound={findings}
+                cleanChecks={checks.length - findings}
+              />
+            );
+          })()}
           <div className="grid gap-4 sm:grid-cols-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

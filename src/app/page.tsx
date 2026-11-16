@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import Link from "next/link";
 import ImageInspector from "@/components/ImageInspector";
 import FileInspector from "@/components/FileInspector";
 import TextInspector from "@/components/TextInspector";
@@ -45,90 +44,19 @@ const TABS: { id: Tab; label: string; description: string; icon: ReactNode }[] =
   },
 ];
 
-const STEPS = [
-  { number: 1, title: "Choose a type", text: "Image, file, or text." },
-  { number: 2, title: "Paste or upload", text: "Everything stays on your device." },
-  { number: 3, title: "See the report", text: "Scores, highlights, and reasons in plain language." },
-];
-
-const PROMISES = ["Everything runs locally in your browser", "No uploads, no accounts", "Detection and reporting only"];
-
 export default function Home() {
   const [tab, setTab] = useState<Tab>("image");
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <section className="relative overflow-hidden rounded-3xl bg-slate-950 px-6 py-10 text-white shadow-2xl shadow-slate-950/20 sm:px-10 sm:py-14">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(560px 300px at 88% -10%, rgba(52,211,153,0.35), transparent 65%), radial-gradient(480px 260px at -5% 110%, rgba(13,148,136,0.28), transparent 60%)",
-          }}
-        />
-        <div className="relative max-w-3xl">
-          <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-emerald-300 uppercase">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-400" />
-            Detection and reporting only
-          </p>
-          <h1 className="mt-5 text-4xl font-bold tracking-tight text-balance sm:text-5xl">
-            See what provenance and AI signals are hiding in your content
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-            CrawlAI inspects an image, a file, or a piece of text and reports what it finds in
-            plain language: Content Credentials, metadata, generator markers, and writing
-            patterns, with the reasons shown next to every score.
-          </p>
-          <ul className="mt-6 flex flex-wrap gap-2.5">
-            {PROMISES.map((promise) => (
-              <li
-                key={promise}
-                className="flex items-center gap-2 rounded-full bg-white/5 px-3.5 py-2 text-sm font-medium text-slate-100 ring-1 ring-white/15"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="h-4 w-4 text-emerald-400" aria-hidden="true">
-                  <path d="M4.5 12.5l5 5L19.5 7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {promise}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-6 text-sm leading-6 text-slate-400">
-            Honest by design: this tool only inspects and reports. It does not remove, alter,
-            clean, or rewrite anything, and no result here proves who created a piece of content.{" "}
-            <Link
-              href="/how-it-works"
-              className="font-medium text-emerald-300 underline decoration-emerald-400/50 underline-offset-4 transition hover:text-emerald-200 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none"
-            >
-              Read how it works
-            </Link>
-            .
-          </p>
-        </div>
-      </section>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">CrawlAI</h1>
+        <p className="mt-1.5 text-sm text-slate-600">
+          Everything runs locally in your browser. Files and text never leave your device.
+        </p>
+      </header>
 
-      <section aria-label="How to use CrawlAI" className="mt-8">
-        <ol className="grid gap-4 sm:grid-cols-3">
-          {STEPS.map((step) => (
-            <li
-              key={step.number}
-              className="panel group flex items-start gap-3.5 p-5 transition duration-300 hover:-translate-y-0.5"
-            >
-              <span className="brand-tile flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-slate-950">
-                {step.number}
-              </span>
-              <span>
-                <span className="block font-semibold text-slate-900">
-                  Step {step.number}: {step.title}
-                </span>
-                <span className="mt-0.5 block text-sm leading-6 text-slate-600">{step.text}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="mt-8">
+      <section>
         <div role="tablist" aria-label="Content type to check" className="grid gap-4 sm:grid-cols-3">
           {TABS.map((item) => (
             <button

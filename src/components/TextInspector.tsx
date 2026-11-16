@@ -15,39 +15,6 @@ const AI_LIKE_SAMPLE =
 const HUMAN_LIKE_SAMPLE =
   "I replaced the cracked seal on my 2019 Civic last Tuesday. Took 40 minutes, one 12 mm wrench, and a rag I have owned since college. The leak stopped straight away. My neighbour Tom swears the old seal was the factory one from 2011, and honestly the part number stamped on it, 47B, makes me think he is right. Cost me 6 dollars and a scraped knuckle.";
 
-const METHODS = [
-  {
-    name: "Fast-DetectGPT",
-    url: "https://github.com/baoguangsheng/fast-detect-gpt",
-    method: "Fast conditional probability curvature check, from an ICLR 2024 paper.",
-  },
-  {
-    name: "Binoculars",
-    url: "https://github.com/ahans30/Binoculars",
-    method: "Compares perplexity across two language models as a ratio, from an ICML 2024 paper.",
-  },
-  {
-    name: "DetectGPT",
-    url: "https://github.com/eric-mitchell/detect-gpt",
-    method: "The original probability curvature method: AI text tends to sit at a local peak of model probability.",
-  },
-  {
-    name: "chatgpt-comparison-detection (Hello-SimpleAI)",
-    url: "https://github.com/Hello-SimpleAI/chatgpt-comparison-detection",
-    method: "The HC3 dataset of human and ChatGPT answers, used to train RoBERTa style classifiers. Referenced for method ideas only, CrawlAI runs no external model.",
-  },
-  {
-    name: "gpt-2-output-dataset (OpenAI)",
-    url: "https://github.com/openai/gpt-2-output-dataset",
-    method: "OpenAI's GPT-2 era detector research. Its classifier approach is a method reference only, and it is weak on modern model output.",
-  },
-  {
-    name: "CrawlAI local engine (in this repo)",
-    url: "https://github.com/ahmedrazasahoo/crawlai",
-    method: "Every score on this page is computed by code that lives in this repository, in src/lib/textAnalyzer.ts, running on your own device. No text is sent to any outside service and no model is downloaded.",
-  },
-];
-
 export default function TextInspector() {
   const [text, setText] = useState("");
   const [submitted, setSubmitted] = useState("");
@@ -395,21 +362,6 @@ export default function TextInspector() {
               </div>
             </section>
           </div>
-
-          <section className="panel p-5 sm:p-6">
-            <h3 className="font-semibold text-slate-900">Your data stays in this project</h3>
-            <p className="mt-1 text-sm text-slate-600">
-              This tool uses no third-party service, no outside API, and no downloaded model. All
-              scoring code lives inside this repository, in src/lib/textAnalyzer.ts, and runs in
-              your browser on your own device. Your text is never sent anywhere, never stored,
-              and disappears when you close the tab.
-            </p>
-            <p className="mt-2 text-sm text-slate-600">
-              The methods listed below are published research ideas. Their papers and open-source
-              projects were used as references only, and the scoring here is original code written
-              for this project.
-            </p>
-          </section>
 
           <div className="grid items-start gap-6 xl:grid-cols-2">
           <section className="panel p-5 sm:p-6">
@@ -846,30 +798,6 @@ export default function TextInspector() {
         </div>
       )}
 
-      <section className="panel p-5 sm:p-6">
-        <h3 className="font-semibold text-slate-900">Methods and sources</h3>
-        <p className="mt-1 text-sm text-slate-600">
-          CrawlAI&apos;s main score is original code. It combines perplexity style predictability
-          proxies (common word choices and stock phrases), burstiness, and classifier style phrase
-          and stylometry signals, taking method ideas from these open research projects. No code was
-          copied from them.
-        </p>
-        <ul className="mt-3 space-y-3">
-          {METHODS.map((item) => (
-            <li key={item.name} className="text-sm">
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-emerald-700 underline focus-visible:ring-2 focus-visible:ring-emerald-500"
-              >
-                {item.name}
-              </a>
-              <span className="text-slate-600">: {item.method}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

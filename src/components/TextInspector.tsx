@@ -311,6 +311,10 @@ export default function TextInspector() {
                           <li key={reason}>{reason}</li>
                         ))}
                       </ul>
+                      <p className="mt-2 text-sm text-slate-700">
+                        <strong className="text-slate-900">Suggestion:</strong>{" "}
+                        {sentence.improvement}
+                      </p>
                       <button
                         type="button"
                         onClick={() => selectSentence(sentence.index)}
@@ -358,7 +362,7 @@ export default function TextInspector() {
                 </ul>
 
                 <p className="mt-3 text-sm text-slate-700">
-                  <strong className="text-slate-900">Strengthen it:</strong>{" "}
+                  <strong className="text-slate-900">Suggestion:</strong>{" "}
                   {selectedSentence.improvement}
                 </p>
 
@@ -537,7 +541,7 @@ function buildReportText(analysis: TextAnalysis, original: string): string {
     lines.push("");
     lines.push(`[${s.score}% ${s.levelLabel}] Sentence ${s.index + 1}: ${s.text}`);
     for (const reason of s.reasons) lines.push(`  Reason: ${reason}`);
-    lines.push(`  Strengthen it: ${s.improvement}`);
+    lines.push(`  Suggestion: ${s.improvement}`);
   }
   lines.push("", "Text as analyzed:", "", original, "");
   return lines.join("\n");

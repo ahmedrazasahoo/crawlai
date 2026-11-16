@@ -1,40 +1,142 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { analyzeText, tokenizeWords, type TextAnalysis } from "@/lib/textAnalyzer";
+import {
+  analyzeText,
+  replaceSentence,
+  tokenizeWords,
+  type TextAnalysis,
+} from "@/lib/textAnalyzer";
 
 export default function TextInspector() {
   const [text, setText] = useState("");
-  const [submitted, setSubmitted] = useState("");
+  const [originalText, setOriginalText] = useState("");
+  const [workingText, setWorkingText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [draft, setDraft] = useState("");
+  const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const analysis = useMemo(() => (submitted ? analyzeText(submitted) : null), [submitted]);
+  const analysis = useMemo(
+    () => (workingText ? analyzeText(workingText) : null),
+    [workingText]
+  );
+  const originalAnalysis = useMemo(
+    () => (originalText ? analyzeText(originalText) : null),
+    [originalText]
+  );
   const liveWordCount = useMemo(() => tokenizeWords(text).length, [text]);
   const flagged = analysis
     ? analysis.sentences.filter((s) => s.level !== "human").sort((a, b) => b.score - a.score)
     : [];
+  const hasEdits = originalText !== "" && workingText !== originalText;
+  const selectedSentence =
+    analysis && selectedIndex !== null
+      ? (analysis.sentences[selectedIndex] ?? null)
+      : null;
 
   function handleAnalyze() {
     if (!text.trim()) return;
     setAnalyzing(true);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      setSubmitted(text);
+      setOriginalText(text);
+      setWorkingText(text);
+      setSelectedIndex(null);
+      setDraft("");
+      setCopied(false);
       setAnalyzing(false);
     }, 400);
   }
 
   function handleClear() {
     setText("");
-    setSubmitted("");
+    setOriginalText("");
+    setWorkingText("");
+    setSelectedIndex(null);
+    setDraft("");
+    setCopied(false);
     setAnalyzing(false);
     if (timer.current) clearTimeout(timer.current);
   }
 
+  function selectSentence(index: number) {
+    if (!analysis) return;
+    const sentence = analysis.sentences[index];
+    if (!sentence) return;
+    setSelectedIndex(index);
+    setDraft(sentence.text);
+  }
+
+  function applyMyEdit() {
+    if (selectedIndex === null || !analysis) return;
+    const current = analysis.sentences[selectedIndex];
+    if (!current || draft === current.text) return;
+    const nextText = replaceSentence(workingText, selectedIndex, draft);
+    setWorkingText(nextText);
+    const nextAnalysis = analyzeText(nextText);
+    const nextSentence = nextAnalysis.sentences[selectedIndex];
+    if (nextSentence) {
+      setSelectedIndex(selectedIndex);
+      setDraft(nextSentence.text);
+    } else {
+      setSelectedIndex(null);
+      setDraft("");
+    }
+  }
+
+  function undoDraftChanges() {
+    if (!selectedSentence) return;
+    setDraft(selectedSentence.text);
+  }
+
+  function resetToOriginal() {
+    if (!originalText || !hasEdits) return;
+    setWorkingText(originalText);
+    if (selectedIndex !== null && originalAnalysis) {
+      const sentence = originalAnalysis.sentences[selectedIndex];
+      if (sentence) {
+        setDraft(sentence.text);
+      } else {
+        setSelectedIndex(null);
+        setDraft("");
+      }
+    }
+  }
+
+  async function copyFinalText() {
+    if (!workingText) return;
+    try {
+      await navigator.clipboard.writeText(workingText);
+    } catch {
+      const scratch = document.createElement("textarea");
+      scratch.value = workingText;
+      scratch.style.position = "fixed";
+      scratch.style.opacity = "0";
+      document.body.appendChild(scratch);
+      scratch.select();
+      document.execCommand("copy");
+      document.body.removeChild(scratch);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  function downloadFinalText() {
+    if (!workingText) return;
+    const blob = new Blob([workingText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "crawlai-my-edited-text.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   function downloadReport() {
-    if (!analysis || !submitted) return;
-    const blob = new Blob([buildReportText(analysis, submitted)], {
+    if (!analysis || !workingText) return;
+    const blob = new Blob([buildReportText(analysis, workingText)], {
       type: "text/plain;charset=utf-8",
     });
     const url = URL.createObjectURL(blob);
@@ -77,7 +179,7 @@ export default function TextInspector() {
           <button
             type="button"
             onClick={handleClear}
-            disabled={text.length === 0 && !submitted}
+            disabled={text.length === 0 && !workingText}
             className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Clear
@@ -110,7 +212,19 @@ export default function TextInspector() {
                 Confidence: {analysis.overall.confidence}
                 {analysis.overall.confidence === "Low" ? " (short text, treat with care)" : ""}
               </span>
+              {hasEdits && (
+                <span className="rounded-full bg-emerald-100 px-2.5 py-1 font-medium text-emerald-800">
+                  Showing your edited copy
+                </span>
+              )}
             </div>
+
+            {hasEdits && originalAnalysis && (
+              <p className="mt-3 text-sm text-slate-700" aria-live="polite">
+                Showing your edited copy. Original score was{" "}
+                {originalAnalysis.overall.aiScore}%, now {analysis.overall.aiScore}%.
+              </p>
+            )}
 
             <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
               <Donut aiScore={analysis.overall.aiScore} />
@@ -197,11 +311,142 @@ export default function TextInspector() {
                           <li key={reason}>{reason}</li>
                         ))}
                       </ul>
+                      <button
+                        type="button"
+                        onClick={() => selectSentence(sentence.index)}
+                        aria-pressed={selectedIndex === sentence.index}
+                        className={`mt-3 min-h-11 rounded-lg px-4 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
+                          selectedIndex === sentence.index
+                            ? "bg-slate-950 text-white hover:bg-slate-800"
+                            : "border border-slate-300 bg-white text-slate-700 hover:border-slate-500"
+                        }`}
+                      >
+                        Edit this sentence myself
+                      </button>
                     </li>
                   ))}
                 </ol>
               </div>
             )}
+
+            {selectedSentence && (
+              <div className="mt-5 rounded-lg border border-slate-300 bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-slate-900">
+                    Edit sentence {selectedSentence.index + 1} of {analysis.sentences.length}
+                  </h4>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold text-white ${
+                      selectedSentence.level === "high"
+                        ? "bg-red-600"
+                        : selectedSentence.level === "mixed"
+                          ? "bg-amber-500"
+                          : "bg-emerald-600"
+                    }`}
+                  >
+                    {selectedSentence.score}% · {selectedSentence.levelLabel}
+                  </span>
+                </div>
+
+                <p className="mt-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  Why it was flagged
+                </p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                  {selectedSentence.reasons.map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+
+                <p className="mt-3 text-sm text-slate-700">
+                  <strong className="text-slate-900">Strengthen it:</strong>{" "}
+                  {selectedSentence.improvement}
+                </p>
+
+                <p className="mt-3 text-sm font-medium text-slate-900">
+                  CrawlAI never writes text for you. You type your own replacement in your own
+                  words.
+                </p>
+
+                <label
+                  htmlFor="sentence-edit-box"
+                  className="mt-3 block text-sm font-medium text-slate-900"
+                >
+                  Your replacement, in your own words
+                </label>
+                <textarea
+                  id="sentence-edit-box"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  rows={4}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                />
+                <div className="mt-1 flex justify-end text-xs text-slate-500" aria-live="polite">
+                  {tokenizeWords(draft).length}{" "}
+                  {tokenizeWords(draft).length === 1 ? "word" : "words"} in your replacement
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={applyMyEdit}
+                    disabled={draft === selectedSentence.text}
+                    className="min-h-11 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Apply my edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={undoDraftChanges}
+                    disabled={draft === selectedSentence.text}
+                    className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Undo changes in this box
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Applying swaps only this sentence in your working copy. Nothing is uploaded,
+                  and your original pasted text stays untouched until you reset or clear.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+              <h4 className="text-sm font-semibold text-slate-900">Your final text</h4>
+              <p className="mt-1 text-xs text-slate-500">
+                This is your working copy: your original text plus only the edits you typed
+                yourself above.
+              </p>
+              <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm whitespace-pre-wrap text-slate-900">
+                {workingText}
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={copyFinalText}
+                  className="min-h-11 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                >
+                  Copy my final text
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadFinalText}
+                  className="min-h-11 rounded-lg border border-slate-950 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                >
+                  Download my final text (.txt)
+                </button>
+                <button
+                  type="button"
+                  onClick={resetToOriginal}
+                  disabled={!hasEdits}
+                  className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Reset to my original text
+                </button>
+                <span role="status" aria-live="polite" className="text-sm font-medium text-emerald-700">
+                  {copied ? "Copied" : ""}
+                </span>
+              </div>
+            </div>
 
             <button
               type="button"

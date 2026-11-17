@@ -191,7 +191,16 @@ export default function FileInspector() {
             );
           })()}
           <div className="panel p-4 sm:p-5">
-            <p className="font-semibold text-slate-900">File summary</p>
+            <p className="flex items-center gap-2.5 font-semibold tracking-tight text-slate-900">
+              <span aria-hidden="true" className="icon-tile h-8 w-8 rounded-lg">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="h-4 w-4">
+                  <path d="M6 3.5h8L18.5 8v12.5h-12.5z" strokeLinejoin="round" />
+                  <path d="M13.5 3.5v5h5" strokeLinejoin="round" />
+                  <path d="M9 13h6M9 16.5h6" strokeLinecap="round" />
+                </svg>
+              </span>
+              File summary
+            </p>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">File name</dt>
@@ -213,7 +222,7 @@ export default function FileInspector() {
           </div>
 
           <div>
-            <h3 className="mb-3 font-semibold text-slate-900">Provenance verdict</h3>
+            <h3 className="mb-3 font-semibold tracking-tight text-slate-900">Provenance verdict</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <VerdictCard
                 title="Content Credentials (C2PA)"
@@ -226,8 +235,8 @@ export default function FileInspector() {
               />
               <VerdictCard title="AI source metadata" found={report.aiFound} detail={report.aiDetail} />
             </div>
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
-              <p className="font-semibold">What this scan can and cannot do</p>
+            <div className="mt-4 rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 text-sm text-slate-800 shadow-sm">
+              <p className="font-semibold tracking-tight">What this scan can and cannot do</p>
               <p className="mt-1">
                 This scan reads readable metadata and container strings. It cannot check an invisible
                 in-content watermark such as SynthID in video frames or audio. Only the watermark
@@ -238,7 +247,7 @@ export default function FileInspector() {
           </div>
 
           <div>
-            <h3 className="mb-3 font-semibold text-slate-900">Fields and strings found</h3>
+            <h3 className="mb-3 font-semibold tracking-tight text-slate-900">Fields and strings found</h3>
             <MetadataTable
               rows={report.rows}
               emptyText="No document fields, encoder strings, or provenance markers from the built in list were found in this file."

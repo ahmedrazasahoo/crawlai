@@ -150,16 +150,23 @@ export default function TextInspector() {
   return (
     <div className="grid items-start gap-6 lg:grid-cols-2">
       <section className="panel p-5 sm:p-6" aria-label="Your text">
-        <label htmlFor="text-input" className="text-lg font-semibold text-slate-900">
-          Your text
-        </label>
+        <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="icon-tile h-10 w-10">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+              <path d="M5 5h14M5 9.5h14M5 14h9M5 18.5h12" strokeLinecap="round" />
+            </svg>
+          </span>
+          <label htmlFor="text-input" className="text-lg font-semibold tracking-tight text-slate-900">
+            Your text
+          </label>
+        </div>
         <textarea
           id="text-input"
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={14}
           placeholder="Paste or type the text you want checked..."
-          className="mt-3 w-full rounded-xl border border-slate-300 bg-white p-4 text-base text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+          className="mt-4 w-full rounded-2xl border border-slate-300 bg-white p-4 text-base text-slate-900 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06)] transition outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:shadow-[inset_0_2px_8px_rgba(15,23,42,0.04),0_0_0_4px_rgba(16,185,129,0.15)]"
         />
         <div className="mt-1 flex justify-end text-xs text-slate-500" aria-live="polite">
           {liveWordCount} {liveWordCount === 1 ? "word" : "words"}
@@ -172,7 +179,7 @@ export default function TextInspector() {
             type="button"
             onClick={handleAnalyze}
             disabled={text.trim().length === 0 || analyzing}
-            className="min-h-11 rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:-translate-y-0.5 hover:from-emerald-500 hover:to-teal-500 hover:shadow-xl hover:shadow-emerald-600/30 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
           >
             {analyzing ? "Analyzing..." : "Analyze text"}
           </button>
@@ -180,7 +187,7 @@ export default function TextInspector() {
             type="button"
             onClick={handleClear}
             disabled={text.length === 0 && !workingText}
-            className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-11 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
           >
             Clear
           </button>
@@ -188,7 +195,14 @@ export default function TextInspector() {
       </section>
 
       <section className="panel p-5 sm:p-6" aria-label="Result">
-        <h3 className="text-lg font-semibold text-slate-900">Result</h3>
+        <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="icon-tile h-10 w-10">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+              <path d="M4 20V10M10 20V4M16 20v-8M21 20H3" strokeLinecap="round" />
+            </svg>
+          </span>
+          <h3 className="text-lg font-semibold tracking-tight text-slate-900">Result</h3>
+        </div>
 
         {analyzing && (
           <p role="status" className="mt-4 text-sm text-slate-700">
@@ -205,15 +219,23 @@ export default function TextInspector() {
         {analysis && !analyzing && (
           <div className="mt-4">
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700">
+              <span
+                className={`rounded-full px-2.5 py-1 font-semibold ring-1 ${
+                  analysis.overall.aiScore >= 65
+                    ? "bg-red-50 text-red-800 ring-red-200"
+                    : analysis.overall.aiScore >= 40
+                      ? "bg-amber-50 text-amber-800 ring-amber-200"
+                      : "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                }`}
+              >
                 Verdict: {analysis.overall.verdict}
               </span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700">
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700 ring-1 ring-slate-200">
                 Confidence: {analysis.overall.confidence}
                 {analysis.overall.confidence === "Low" ? " (short text, treat with care)" : ""}
               </span>
               {hasEdits && (
-                <span className="rounded-full bg-emerald-100 px-2.5 py-1 font-medium text-emerald-800">
+                <span className="rounded-full bg-emerald-100 px-2.5 py-1 font-medium text-emerald-800 ring-1 ring-emerald-200">
                   Showing your edited copy
                 </span>
               )}
@@ -231,12 +253,14 @@ export default function TextInspector() {
               <div className="w-full flex-1 space-y-4">
                 <div>
                   <div className="flex items-end justify-between gap-3">
-                    <span className="text-sm font-medium text-red-800">AI-pattern</span>
-                    <span className="text-4xl font-bold text-red-600">
+                    <span className="text-xs font-semibold tracking-wider text-red-800 uppercase">
+                      AI-pattern
+                    </span>
+                    <span className="text-4xl font-bold tracking-tight text-red-600">
                       {analysis.overall.aiScore}%
                     </span>
                   </div>
-                  <div className="mt-1 h-4 w-full overflow-hidden rounded-full bg-red-100">
+                  <div className="mt-1.5 h-4 w-full overflow-hidden rounded-full bg-red-100 shadow-[inset_0_1px_3px_rgba(185,28,28,0.18)]">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-600 transition-all duration-500"
                       style={{ width: `${analysis.overall.aiScore}%` }}
@@ -245,12 +269,14 @@ export default function TextInspector() {
                 </div>
                 <div>
                   <div className="flex items-end justify-between gap-3">
-                    <span className="text-sm font-medium text-emerald-800">Human-pattern</span>
-                    <span className="text-4xl font-bold text-emerald-600">
+                    <span className="text-xs font-semibold tracking-wider text-emerald-800 uppercase">
+                      Human-pattern
+                    </span>
+                    <span className="text-4xl font-bold tracking-tight text-emerald-600">
                       {analysis.overall.humanScore}%
                     </span>
                   </div>
-                  <div className="mt-1 h-4 w-full overflow-hidden rounded-full bg-emerald-100">
+                  <div className="mt-1.5 h-4 w-full overflow-hidden rounded-full bg-emerald-100 shadow-[inset_0_1px_3px_rgba(4,120,87,0.18)]">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-500"
                       style={{ width: `${analysis.overall.humanScore}%` }}
@@ -260,7 +286,7 @@ export default function TextInspector() {
               </div>
             </div>
 
-            <p className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-900">
+            <p className="mt-4 rounded-2xl border border-amber-300/80 bg-gradient-to-b from-amber-50 to-amber-50/60 p-3 text-sm font-medium text-amber-900 shadow-sm">
               Estimate only. No detector can give a correct or proven percentage, and this score
               must not be used as proof of authorship.
             </p>
@@ -287,10 +313,10 @@ export default function TextInspector() {
                   {flagged.slice(0, 5).map((sentence) => (
                     <li
                       key={sentence.index}
-                      className={`rounded-lg border p-4 ${
+                      className={`rounded-2xl border border-l-4 p-4 shadow-sm ${
                         sentence.level === "high"
-                          ? "border-red-200 bg-red-50"
-                          : "border-amber-200 bg-amber-50"
+                          ? "border-red-200 border-l-red-500 bg-gradient-to-b from-red-50 to-red-50/50"
+                          : "border-amber-200 border-l-amber-500 bg-gradient-to-b from-amber-50 to-amber-50/50"
                       }`}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -311,18 +337,29 @@ export default function TextInspector() {
                           <li key={reason}>{reason}</li>
                         ))}
                       </ul>
-                      <p className="mt-2 text-sm text-slate-700">
-                        <strong className="text-slate-900">Suggestion:</strong>{" "}
-                        {sentence.improvement}
-                      </p>
+                      <div className="mt-3 flex gap-2.5 rounded-xl bg-white/75 px-3 py-2.5 ring-1 ring-slate-900/5">
+                        <span aria-hidden="true" className="mt-0.5 shrink-0 text-amber-500">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="h-4.5 w-4.5">
+                            <path d="M9.5 18.5h5M10.5 21h3" strokeLinecap="round" />
+                            <path
+                              d="M12 3.5a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.2 1.1 2.2h5c0-1 .4-1.6 1.1-2.2A6 6 0 0 0 12 3.5z"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        <p className="text-sm text-slate-700">
+                          <strong className="text-slate-900">Suggestion:</strong>{" "}
+                          {sentence.improvement}
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => selectSentence(sentence.index)}
                         aria-pressed={selectedIndex === sentence.index}
-                        className={`mt-3 min-h-11 rounded-lg px-4 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
+                        className={`mt-3 min-h-11 rounded-xl px-4 py-2 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                           selectedIndex === sentence.index
-                            ? "bg-slate-950 text-white hover:bg-slate-800"
-                            : "border border-slate-300 bg-white text-slate-700 hover:border-slate-500"
+                            ? "bg-gradient-to-b from-slate-900 to-slate-950 text-white shadow-md hover:-translate-y-0.5"
+                            : "border border-slate-300 bg-white text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-slate-400 hover:shadow"
                         }`}
                       >
                         Edit this sentence myself
@@ -334,9 +371,15 @@ export default function TextInspector() {
             )}
 
             {selectedSentence && (
-              <div className="mt-5 rounded-lg border border-slate-300 bg-slate-50 p-4">
+              <div className="mt-5 rounded-3xl border border-emerald-200 bg-gradient-to-b from-emerald-50/90 via-slate-50 to-slate-50 p-4 shadow-[0_14px_34px_-22px_rgba(5,150,105,0.55)] sm:p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-sm font-semibold text-slate-900">
+                  <h4 className="flex items-center gap-2.5 text-sm font-semibold tracking-tight text-slate-900">
+                    <span aria-hidden="true" className="icon-tile h-8 w-8 rounded-lg">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="h-4 w-4">
+                        <path d="M16.8 4.2a2.3 2.3 0 0 1 3.3 3.3L9 18.6 4.5 19.8 5.7 15.3z" strokeLinejoin="round" />
+                        <path d="M14.5 6.5l3 3" strokeLinecap="round" />
+                      </svg>
+                    </span>
                     Edit sentence {selectedSentence.index + 1} of {analysis.sentences.length}
                   </h4>
                   <span
@@ -361,10 +404,21 @@ export default function TextInspector() {
                   ))}
                 </ul>
 
-                <p className="mt-3 text-sm text-slate-700">
-                  <strong className="text-slate-900">Suggestion:</strong>{" "}
-                  {selectedSentence.improvement}
-                </p>
+                <div className="mt-3 flex gap-2.5 rounded-xl bg-white/80 px-3 py-2.5 ring-1 ring-emerald-900/5">
+                  <span aria-hidden="true" className="mt-0.5 shrink-0 text-amber-500">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="h-4.5 w-4.5">
+                      <path d="M9.5 18.5h5M10.5 21h3" strokeLinecap="round" />
+                      <path
+                        d="M12 3.5a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.2 1.1 2.2h5c0-1 .4-1.6 1.1-2.2A6 6 0 0 0 12 3.5z"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <p className="text-sm text-slate-700">
+                    <strong className="text-slate-900">Suggestion:</strong>{" "}
+                    {selectedSentence.improvement}
+                  </p>
+                </div>
 
                 <p className="mt-3 text-sm font-medium text-slate-900">
                   CrawlAI never writes text for you. You type your own replacement in your own
@@ -382,7 +436,7 @@ export default function TextInspector() {
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   rows={4}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                  className="mt-1 w-full rounded-2xl border border-slate-300 bg-white p-3 text-sm text-slate-900 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06)] transition outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:shadow-[inset_0_2px_8px_rgba(15,23,42,0.04),0_0_0_4px_rgba(16,185,129,0.15)]"
                 />
                 <div className="mt-1 flex justify-end text-xs text-slate-500" aria-live="polite">
                   {tokenizeWords(draft).length}{" "}
@@ -394,7 +448,7 @@ export default function TextInspector() {
                     type="button"
                     onClick={applyMyEdit}
                     disabled={draft === selectedSentence.text}
-                    className="min-h-11 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="min-h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:-translate-y-0.5 hover:from-emerald-500 hover:to-teal-500 hover:shadow-xl hover:shadow-emerald-600/30 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                   >
                     Apply my edit
                   </button>
@@ -402,7 +456,7 @@ export default function TextInspector() {
                     type="button"
                     onClick={undoDraftChanges}
                     disabled={draft === selectedSentence.text}
-                    className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="min-h-11 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-500 transition-all hover:bg-white hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                   >
                     Undo changes in this box
                   </button>
@@ -414,27 +468,35 @@ export default function TextInspector() {
               </div>
             )}
 
-            <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
-              <h4 className="text-sm font-semibold text-slate-900">Your final text</h4>
-              <p className="mt-1 text-xs text-slate-500">
+            <div className="mt-5 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/70 p-4 shadow-sm sm:p-5">
+              <h4 className="flex items-center gap-2.5 text-sm font-semibold tracking-tight text-slate-900">
+                <span aria-hidden="true" className="icon-tile h-8 w-8 rounded-lg">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="h-4 w-4">
+                    <path d="M6 3.5h8L18.5 8v12.5h-12.5z" strokeLinejoin="round" />
+                    <path d="M13.5 3.5v5h5" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                Your final text
+              </h4>
+              <p className="mt-1.5 text-xs text-slate-500">
                 This is your working copy: your original text plus only the edits you typed
                 yourself above.
               </p>
-              <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm whitespace-pre-wrap text-slate-900">
+              <div className="mt-3 max-h-64 overflow-y-auto rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-3.5 text-sm whitespace-pre-wrap text-slate-900 shadow-[inset_0_2px_10px_rgba(15,23,42,0.05)]">
                 {workingText}
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={copyFinalText}
-                  className="min-h-11 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                  className="min-h-11 rounded-xl bg-gradient-to-b from-slate-900 to-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-950/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/25 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                 >
                   Copy my final text
                 </button>
                 <button
                   type="button"
                   onClick={downloadFinalText}
-                  className="min-h-11 rounded-lg border border-slate-950 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                  className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-400 hover:shadow focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
                 >
                   Download my final text (.txt)
                 </button>
@@ -442,7 +504,7 @@ export default function TextInspector() {
                   type="button"
                   onClick={resetToOriginal}
                   disabled={!hasEdits}
-                  className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-500 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="min-h-11 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                 >
                   Reset to my original text
                 </button>
@@ -455,8 +517,13 @@ export default function TextInspector() {
             <button
               type="button"
               onClick={downloadReport}
-              className="mt-5 min-h-11 rounded-lg border border-slate-950 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+              className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-400 hover:shadow focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
             >
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="h-4 w-4">
+                <path d="M12 4v11" strokeLinecap="round" />
+                <path d="M7 11l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M4.5 19.5h15" strokeLinecap="round" />
+              </svg>
               Download report (.txt)
             </button>
           </div>
@@ -472,11 +539,15 @@ function Donut({ aiScore }: { aiScore: number }) {
   const aiLength = (aiScore / 100) * circumference;
   return (
     <div
-      className="relative h-36 w-36 shrink-0 drop-shadow-sm"
+      className="relative h-36 w-36 shrink-0"
       role="img"
       aria-label={`AI pattern ${aiScore} percent, human pattern ${100 - aiScore} percent`}
     >
-      <svg viewBox="0 0 120 120" className="h-36 w-36 -rotate-90">
+      <div
+        aria-hidden="true"
+        className="absolute inset-3 rounded-full bg-gradient-to-tr from-emerald-300/35 via-teal-200/20 to-red-300/35 blur-xl"
+      />
+      <svg viewBox="0 0 120 120" className="relative h-36 w-36 -rotate-90 drop-shadow-sm">
         <defs>
           <linearGradient id="donut-human" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#34d399" />

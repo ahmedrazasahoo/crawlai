@@ -19,7 +19,7 @@ export function LogoMark({ size = "md" }: { size?: "md" | "sm" }) {
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/90 text-white shadow-lg shadow-slate-950/5 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-emerald-300/15 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white shadow-lg shadow-slate-950/20 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link
           href="/"
@@ -34,20 +34,23 @@ export default function Header() {
           </span>
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="hidden items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 md:flex">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-400" />
+          <span className="hidden items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 shadow-[0_0_18px_-6px_rgba(52,211,153,0.7)] md:flex">
+            <span aria-hidden="true" className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
             Runs 100% locally
           </span>
           <nav aria-label="Main" className="flex items-center gap-1 text-sm sm:gap-2">
             <Link
               href="/"
-              className="min-h-11 rounded-full px-3.5 py-2.5 font-medium text-slate-200 transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none"
+              className="min-h-11 rounded-full px-3.5 py-2.5 font-medium text-slate-200 transition-all hover:bg-white/10 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none"
             >
               Check content
             </Link>
             <Link
               href="/how-it-works"
-              className="min-h-11 rounded-full px-3.5 py-2.5 font-medium text-slate-200 transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none"
+              className="min-h-11 rounded-full px-3.5 py-2.5 font-medium text-slate-200 transition-all hover:bg-white/10 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none"
             >
               How it works
             </Link>

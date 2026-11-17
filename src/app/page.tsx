@@ -50,32 +50,45 @@ export default function Home() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">CrawlAI</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          Crawl
+          <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+            AI
+          </span>
+        </h1>
         <p className="mt-1.5 text-sm text-slate-600">
           Everything runs locally in your browser. Files and text never leave your device.
         </p>
+        <div
+          aria-hidden="true"
+          className="mt-3 h-1 w-24 rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent"
+        />
       </header>
 
       <section>
-        <div role="tablist" aria-label="Content type to check" className="grid gap-4 sm:grid-cols-3">
+        <div
+          role="tablist"
+          aria-label="Content type to check"
+          className="grid gap-3 rounded-[2rem] bg-white/50 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-slate-200/70 backdrop-blur-sm sm:grid-cols-3 sm:gap-4 sm:p-3"
+        >
           {TABS.map((item) => (
             <button
               key={item.id}
               role="tab"
               aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
-              className={`min-h-24 rounded-2xl border p-5 text-left transition duration-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none ${
+              className={`min-h-24 rounded-3xl border p-5 text-left transition-all duration-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none ${
                 tab === item.id
-                  ? "border-emerald-600 bg-emerald-50/80 shadow-lg shadow-emerald-600/10 ring-1 ring-emerald-600"
-                  : "border-slate-200/80 bg-white shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                  ? "-translate-y-0.5 border-emerald-600 bg-gradient-to-b from-emerald-50 to-white shadow-xl shadow-emerald-600/15 ring-1 ring-emerald-600"
+                  : "border-slate-200/70 bg-white/80 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-lg hover:shadow-slate-900/5"
               }`}
             >
               <span className="flex items-center gap-3">
                 <span
-                  className={`flex h-11 w-11 items-center justify-center rounded-xl transition ${
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-300 ${
                     tab === item.id
                       ? "brand-tile text-slate-950"
-                      : "bg-slate-100 text-slate-500"
+                      : "bg-slate-100 text-slate-500 ring-1 ring-slate-900/5"
                   }`}
                 >
                   {item.icon}

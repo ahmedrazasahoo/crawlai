@@ -85,7 +85,7 @@ const SECTIONS = [
     title: "Open-source detector methods and sources",
     body: [
       "CrawlAI's main text score is original code written for this tool. Its design takes method ideas from published open research: perplexity style predictability, burstiness, and classifier style phrase and stylometry signals. No code was copied from those projects.",
-      "Fast-DetectGPT (ICLR 2024) speeds up probability curvature checking. Binoculars (ICML 2024) compares perplexity across two models as a ratio. DetectGPT is the original probability curvature method. The RoBERTa detectors from Hello-SimpleAI and OpenAI are trained classifiers, Those projects were used as research references only.",
+      "Fast-DetectGPT (ICLR 2024) speeds up probability curvature checking. Binoculars (ICML 2024) compares perplexity across two models as a ratio. DetectGPT is the original probability curvature method. The RoBERTa detectors from Hello-SimpleAI and OpenAI are trained classifiers. Those projects were used as research references only.",
       "CrawlAI itself calls no outside service. Every score is computed by original code inside this repository, running locally in the browser, so user text and files never leave the device and no model is downloaded.",
     ],
   },
@@ -122,7 +122,7 @@ export default function HowItWorksPage() {
       <div className="mt-8 space-y-8">
         {SECTIONS.map((section) => (
           <section key={section.title} className="panel p-5 sm:p-6">
-            <h2 className="text-xl font-semibold text-slate-950">{section.title}</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">{section.title}</h2>
             {section.body.map((paragraph) => (
               <p key={paragraph.slice(0, 32)} className="mt-3 text-sm leading-6 text-slate-700 sm:text-base">
                 {paragraph}
@@ -132,8 +132,8 @@ export default function HowItWorksPage() {
         ))}
       </div>
 
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h2 className="text-xl font-semibold text-slate-950">Source projects</h2>
+      <section className="panel mt-8 p-5 sm:p-6">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-950">Source projects</h2>
         <ul className="mt-3 space-y-3">
           {METHOD_SOURCES.map((item) => (
             <li key={item.name} className="text-sm sm:text-base">
@@ -159,7 +159,7 @@ export default function HowItWorksPage() {
         </p>
         <Link
           href="/"
-          className="mt-4 inline-block rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
+          className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/30 focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:outline-none"
         >
           Go to the checker
         </Link>

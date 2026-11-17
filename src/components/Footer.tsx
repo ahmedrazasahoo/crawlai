@@ -3,7 +3,7 @@ import { LogoMark } from "./Header";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white/70">
+    <footer className="border-t border-slate-200/80 bg-gradient-to-b from-white/70 via-white/60 to-emerald-50/50">
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -33,8 +33,11 @@ export default function Footer() {
           </nav>
         </div>
         <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-5 text-xs text-slate-500">
-          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 font-medium text-emerald-800 ring-1 ring-emerald-200">
-            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 font-medium text-emerald-800 shadow-sm ring-1 ring-emerald-200">
+            <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
             Privacy note: all checks run in your browser. Files you select are not uploaded to a
             server by this tool.
           </span>
